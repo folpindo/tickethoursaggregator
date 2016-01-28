@@ -10,7 +10,7 @@ On trac.ini, just insert the following lines:
 [tickethoursaggregator]
 add_hours_fields = add_dev_hours, add_qa_hours
 add_dev_hours = total_dev_hours
-add_qa_hours = total_dev_hours
+add_qa_hours = total_qa_hours
  
 """
 
@@ -36,6 +36,9 @@ class TicketHoursAggregator(Component):
 
     implements(ITicketChangeListener,IRequestHandler)
 
+    def __init__(self):
+        pass
+
     def match_request(self,req):
         pass
 
@@ -52,7 +55,7 @@ class TicketHoursAggregator(Component):
 	entry_fields = [entry_field.strip() for entry_field in self.get_entry_fields().split(',')]
 	total_hours_fields = []
 	for entry_field in entry_fields:
-            total_hours_fields.append(get_target_fields(entry_field))
+            total_hours_fields.append(self.get_target_fields(entry_field))
 	self.log.debug("Ticket Hours Aggregator Entry Fields:")
 	self.log.debug(entry_fields)
 	self.log.debug("Ticket Hours Aggregator Fields:")
@@ -77,19 +80,20 @@ class TicketHoursAggregator(Component):
         self.old_values = old_values
 
     def get_entry_fields(self):
+        parser = self.config.parser
 	if parser.has_section('tickethoursaggregator'):
             self.log.debug("Found Ticket Hours Aggregator Section")
-            if config.has_option('tickethoursaggregator','add_hours_fields'):
-		self._entry_fields = config.get('tickethoursaggregator','add_hours_fields')
+            if parser.has_option('tickethoursaggregator','add_hours_fields'):
+		self._entry_fields = parser.get('tickethoursaggregator','add_hours_fields')
 	return self._entry_fields 
 
     def get_target_fields(self,entry_field_str):
+        parser = self.config.parser
 	entry_field = None
 	if parser.has_section('tickethoursaggregator'):
             self.log.debug("Found Ticket Hours Aggregator Section")
-            if config.has_option('tickethoursaggregator', entry_field_str):
-		entry_field =  config.get('tickethoursaggregator',entry_field_str)
-		entry_fields.append(entry)
+            if parser.has_option('tickethoursaggregator', entry_field_str):
+		entry_field =  parser.get('tickethoursaggregator',entry_field_str)
 	return entry_field
 
 
