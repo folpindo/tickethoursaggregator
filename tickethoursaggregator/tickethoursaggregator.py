@@ -15,7 +15,6 @@ add_qa_hours = total_qa_hours
 """
 
 import os,sys,urllib,urllib2,time,re
-from influxdb import InfluxDBClient
 from logbook import Logger,FileHandler
 from trac.core import *
 from trac.ticket.api import ITicketChangeListener
