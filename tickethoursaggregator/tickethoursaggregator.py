@@ -49,24 +49,19 @@ class TicketHoursAggregator(Component):
         pass
 
     def ticket_changed(self,ticket,comment,author,old_values):
+        self.ticket = ticket
+        self.ticket_id = ticket.id
         ticket_id = ticket.id
         config = self.config
         env = self.env
 	entry_fields = [entry_field.strip() for entry_field in self.get_entry_fields().split(',')]
 	total_hours_fields = []
 	for entry_field in entry_fields:
-            total_hours_fields.append(self.get_target_fields(entry_field))
-	self.log.debug("Ticket Hours Aggregator Entry Fields:")
-	self.log.debug(entry_fields)
-	self.log.debug("Ticket Hours Aggregator Fields:")
-	self.log.debug(total_hours_fields)
-        #sku = ticket.get_value_or_default("sku")
-        #brand = ticket.get_value_or_default("brand")
-        """ 
-        for k in old_values:
-            v = ticket.get_value_or_default(k) #the values to be pushed to influxdb
-            self.log.debug("OLD_VALUES: %s, new: %s" % (k,v))
-        """ 
+            total_entry_field = self.get_target_fields(entry_field)
+            total_hours_fields.append(total_entry_field)
+            ticket_field_value = ticket.get_value_or_default(entry_field)
+            self.aggregate_on_custom_field(total_entry_field,ticket_field_value)
+            self.update_custom_field(entry_field,0)
               
     def ticket_deleted(self,ticket):
         pass
@@ -82,7 +77,6 @@ class TicketHoursAggregator(Component):
     def get_entry_fields(self):
         parser = self.config.parser
 	if parser.has_section('tickethoursaggregator'):
-            self.log.debug("Found Ticket Hours Aggregator Section")
             if parser.has_option('tickethoursaggregator','add_hours_fields'):
 		self._entry_fields = parser.get('tickethoursaggregator','add_hours_fields')
 	return self._entry_fields 
@@ -91,10 +85,24 @@ class TicketHoursAggregator(Component):
         parser = self.config.parser
 	entry_field = None
 	if parser.has_section('tickethoursaggregator'):
-            self.log.debug("Found Ticket Hours Aggregator Section")
             if parser.has_option('tickethoursaggregator', entry_field_str):
 		entry_field =  parser.get('tickethoursaggregator',entry_field_str)
 	return entry_field
+
+    def aggregate_on_custom_field(self,field_name,field_value):
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            sql = """
+                UPDATE ticket_custom set value=value+%s WHERE ticket=%s and name="%s"
+            """ % (field_value,self.ticket_id,field_name)
+            cursor.execute(sql)
+    def update_custom_field(self,field_name,field_value):
+        with self.env.db_transaction as db:
+            cursor = db.cursor()
+            sql = """
+                UPDATE ticket_custom set value=%s WHERE ticket=%s and name="%s"
+            """ % (field_value,self.ticket_id,field_name)
+            cursor.execute(sql)
 
 
 if __name__ == "__main__":
