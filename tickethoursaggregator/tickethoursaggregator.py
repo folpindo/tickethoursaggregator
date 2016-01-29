@@ -54,13 +54,20 @@ class TicketHoursAggregator(Component):
         config = self.config
         env = self.env
 	entry_fields = [entry_field.strip() for entry_field in self.get_entry_fields().split(',')]
+
+	changes_on_monitored_fields = False
+	for field in self.old_values.keys():
+            if field in entry_fields:
+                changes_on_monitored_fields = True
+        
 	total_hours_fields = []
-	for entry_field in entry_fields:
-            total_entry_field = self.get_target_fields(entry_field)
-            total_hours_fields.append(total_entry_field)
-            ticket_field_value = ticket.get_value_or_default(entry_field)
-            self.aggregate_on_custom_field(total_entry_field,ticket_field_value)
-            self.update_custom_field(entry_field,0)
+	if changes_on_monitored_fields:
+            for entry_field in entry_fields:
+                total_entry_field = self.get_target_fields(entry_field)
+                total_hours_fields.append(total_entry_field)
+                ticket_field_value = ticket.get_value_or_default(entry_field)
+                self.aggregate_on_custom_field(total_entry_field,ticket_field_value)
+                self.update_custom_field(entry_field,0)
               
     def ticket_deleted(self,ticket):
         pass
