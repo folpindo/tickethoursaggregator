@@ -67,7 +67,8 @@ class TicketHoursAggregator(Component):
                 total_entry_field = self.get_target_fields(entry_field)
                 total_hours_fields.append(total_entry_field)
                 ticket_field_value = ticket.get_value_or_default(entry_field)
-                self.aggregate_on_custom_field(total_entry_field,ticket_field_value)
+                if ticket_field_value is not 0 or ticket_field_value is not None:
+                    self.aggregate_on_custom_field(total_entry_field,ticket_field_value)
                 self.update_custom_field(entry_field,0)
               
     def ticket_deleted(self,ticket):
