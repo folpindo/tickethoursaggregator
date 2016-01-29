@@ -50,6 +50,7 @@ class TicketHoursAggregator(Component):
     def ticket_changed(self,ticket,comment,author,old_values):
         self.ticket = ticket
         self.ticket_id = ticket.id
+        self.old_values = old_values
         ticket_id = ticket.id
         config = self.config
         env = self.env
